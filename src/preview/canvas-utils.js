@@ -217,15 +217,35 @@ export function createCanvasManager(canvas) {
     },
     
     /**
-     * Draw a label text.
+     * Draw a label text inside the printable area.
+     * A white background rect is drawn first so the label is always
+     * readable even when a cut line passes through it.
+     *
+     * @param {string} text
+     * @param {number} marginPt - Non-printable margin in points.
      */
-    drawLabel(text, x, y) {
-      ctx.fillStyle = 'rgba(100, 100, 100, 0.7)';
-      ctx.font = `${6 / scale > 8 ? 6 : 6}px sans-serif`;
-      // Scale font so it's readable regardless of zoom
+    drawLabel(text, marginPt = 0) {
+      const safeMargin = Math.max(marginPt, 4);
       const fontSize = Math.max(6, 10 / scale);
-      ctx.font = `${fontSize}px sans-serif`;
-      ctx.fillText(text, x, y + fontSize);
+      ctx.font = `bold ${fontSize}px sans-serif`;
+
+      const x = safeMargin + 2;
+      const y = safeMargin + 2;
+      const padding = 2;
+      const textWidth = ctx.measureText(text).width;
+
+      // White knockout rect so cut lines behind the label don't bleed through
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+      ctx.fillRect(
+        x - padding,
+        y,
+        textWidth + padding * 2,
+        fontSize + padding * 2
+      );
+
+      // Label text
+      ctx.fillStyle = 'rgba(40, 40, 40, 0.95)';
+      ctx.fillText(text, x, y + fontSize + padding - 1);
     },
     
     /**

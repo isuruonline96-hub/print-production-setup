@@ -148,6 +148,12 @@ function bindEvents() {
   elements.gapInput.addEventListener('input', handleSettingsChange);
   elements.duplexSelect.addEventListener('change', handleSettingsChange);
   
+  // Order number — live preview update on every keystroke
+  elements.orderNumber.addEventListener('input', () => {
+    job.orderNumber = elements.orderNumber.value.trim();
+    if (previewRenderer) previewRenderer.render();
+  });
+
   // Generate
   elements.generateBtn.addEventListener('click', handleGenerate);
   
@@ -232,8 +238,6 @@ async function handleFileUpload(e, side) {
     if (side === 'front') {
       frontFileInfo = fileInfo;
       job.frontFile = fileInfo;
-      job.artworkWidthPt = fileInfo.widthPt;
-      job.artworkHeightPt = fileInfo.heightPt;
       job.frontFileInfo = fileInfo;
       
       // Update UI
@@ -253,6 +257,11 @@ async function handleFileUpload(e, side) {
       elements.backFileDims.textContent = formatDimensions(fileInfo.widthPt, fileInfo.heightPt, currentUnit);
       elements.backUpload.querySelector('.upload-icon').textContent = '✅';
     }
+
+    // Use front as primary artwork size; fall back to back if front is missing
+    const primaryFile = frontFileInfo || backFileInfo;
+    job.artworkWidthPt = primaryFile.widthPt;
+    job.artworkHeightPt = primaryFile.heightPt;
     
     // DPI warning
     if (fileInfo.dpiWarning) {
@@ -261,7 +270,7 @@ async function handleFileUpload(e, side) {
     
     showNotification(`${side === 'front' ? 'Front' : 'Back'} artwork loaded: ${fileInfo.filename}`, 'success', 3000);
     
-    // Check dimension match if both files uploaded
+    // Check dimension match only if both files uploaded
     checkDimensionMatch();
     updateFileInfoPanel();
     updateArtworkDisplay();
@@ -350,7 +359,9 @@ function buildFileInfoHTML(info) {
 // Artwork Display
 // ============================================================
 function updateArtworkDisplay() {
-  if (!frontFileInfo) {
+  // Use whichever file is available (front preferred, back as fallback)
+  const anyFile = frontFileInfo || backFileInfo;
+  if (!anyFile) {
     elements.artworkWidth.value = '';
     elements.artworkHeight.value = '';
     return;
@@ -527,10 +538,16 @@ function readAllSettings() {
 // Layout Recalculation
 // ============================================================
 function recalculateLayout() {
-  if (!frontFileInfo) {
+  // Need at least one artwork file to calculate layout
+  const primaryFile = frontFileInfo || backFileInfo;
+  if (!primaryFile) {
     hideLayoutResults();
     return;
   }
+
+  // Keep artwork dimensions in sync with whichever file is the primary source
+  job.artworkWidthPt = primaryFile.widthPt;
+  job.artworkHeightPt = primaryFile.heightPt;
   
   // Read current settings
   readAllSettings();
@@ -708,10 +725,10 @@ function updatePreview() {
 // ============================================================
 function updateGenerateButton() {
   const hasLayout = !!job.layout;
-  const hasFront = !!frontFileInfo;
-  const hasBack = !!backFileInfo;
+  // At least one artwork file is enough to generate
+  const hasArtwork = !!(frontFileInfo || backFileInfo);
   
-  elements.generateBtn.disabled = !(hasLayout && hasFront && hasBack);
+  elements.generateBtn.disabled = !(hasLayout && hasArtwork);
 }
 
 // ============================================================
@@ -737,8 +754,8 @@ async function handleGenerate() {
     return;
   }
   
-  if (!job.frontFile || !job.backFile) {
-    showNotification('Both Front and Back artwork files are required.', 'error');
+  if (!job.frontFile && !job.backFile) {
+    showNotification('At least one artwork file (Front or Back) is required.', 'error');
     return;
   }
   

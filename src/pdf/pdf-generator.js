@@ -2,10 +2,13 @@
  * Master PDF Generator
  * 
  * Creates all 4 PDF files from the Job model:
- * 1. {ORDER}-front.pdf — Front artwork + cut lines
- * 2. {ORDER}-back.pdf — Back artwork + cut lines
- * 3. {ORDER}-front-cut.pdf — Front cut lines ONLY
- * 4. {ORDER}-back-cut.pdf — Back cut lines ONLY
+ * 1. {ORDER}-front.pdf     — Cut lines (behind) + Front artwork (on top)
+ * 2. {ORDER}-back.pdf      — Cut lines (behind) + Back artwork (on top)
+ * 3. {ORDER}-front-cut.pdf — Front cut lines ONLY (no artwork)
+ * 4. {ORDER}-back-cut.pdf  — Back cut lines ONLY (no artwork)
+ *
+ * Layer order for print PDFs: cut lines are drawn FIRST so artwork covers them.
+ * The cut file PDFs contain cut lines only and are sent separately to the cutter.
  */
 
 import { PDFDocument } from 'pdf-lib';
@@ -36,52 +39,58 @@ export async function generateAllPDFs(job) {
 }
 
 /**
- * Generate Front PDF — artwork + cut lines.
+ * Generate Front PDF — cut lines BEHIND artwork (artwork is optional).
+ * If no front artwork is uploaded the page contains cut lines only.
  */
 export async function generateFrontPDF(job) {
   const doc = await PDFDocument.create();
   const page = doc.addPage([job.paperWidthPt, job.paperHeightPt]);
 
-  // Embed front artwork at all positions
-  await embedArtwork(
-    doc, page, job.frontFile,
-    job.layout.positions,
-    job.layout.artworkPlacementWidth,
-    job.layout.artworkPlacementHeight,
-    job.paperHeightPt,
-    job.artworkRotated,
-  );
-
-  // Draw cut lines on top of artwork
+  // Draw cut lines FIRST so they appear behind the artwork
   drawCutLines(page, job.cutLines, job.paperHeightPt);
 
-  // Draw label
+  // Embed front artwork on top (only if a file was uploaded)
+  if (job.frontFile) {
+    await embedArtwork(
+      doc, page, job.frontFile,
+      job.layout.positions,
+      job.layout.artworkPlacementWidth,
+      job.layout.artworkPlacementHeight,
+      job.paperHeightPt,
+      job.artworkRotated,
+    );
+  }
+
+  // Draw label (always on top)
   await drawLabel(doc, page, job.orderNumber, 'FRONT', job.paperHeightPt, job.marginPt);
 
   return await doc.save();
 }
 
 /**
- * Generate Back PDF — artwork + cut lines.
+ * Generate Back PDF — cut lines BEHIND artwork (artwork is optional).
+ * If no back artwork is uploaded the page contains cut lines only.
  */
 export async function generateBackPDF(job) {
   const doc = await PDFDocument.create();
   const page = doc.addPage([job.paperWidthPt, job.paperHeightPt]);
 
-  // Embed back artwork at duplex-transformed positions
-  await embedArtwork(
-    doc, page, job.backFile,
-    job.backPositions,
-    job.layout.artworkPlacementWidth,
-    job.layout.artworkPlacementHeight,
-    job.paperHeightPt,
-    job.artworkRotated,
-  );
-
-  // Draw back cut lines
+  // Draw back cut lines FIRST so they appear behind the artwork
   drawCutLines(page, job.backCutLines, job.paperHeightPt);
 
-  // Draw label
+  // Embed back artwork on top (only if a file was uploaded)
+  if (job.backFile) {
+    await embedArtwork(
+      doc, page, job.backFile,
+      job.backPositions,
+      job.layout.artworkPlacementWidth,
+      job.layout.artworkPlacementHeight,
+      job.paperHeightPt,
+      job.artworkRotated,
+    );
+  }
+
+  // Draw label (always on top)
   await drawLabel(doc, page, job.orderNumber, 'BACK', job.paperHeightPt, job.marginPt);
 
   return await doc.save();

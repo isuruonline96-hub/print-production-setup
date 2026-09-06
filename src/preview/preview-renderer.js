@@ -151,7 +151,7 @@ export function createPreviewRenderer(canvas) {
       }
       
       // Label
-      manager.drawLabel(`${job.orderNumber} FRONT`, 2, 0);
+      manager.drawLabel(`${job.orderNumber} FRONT`, job.marginPt);
     },
     
     /**
@@ -182,7 +182,7 @@ export function createPreviewRenderer(canvas) {
         manager.drawCutLines(job.backCutLines, '#e53935', 0.75);
       }
       
-      manager.drawLabel(`${job.orderNumber} BACK`, 2, 0);
+      manager.drawLabel(`${job.orderNumber} BACK`, job.marginPt);
     },
     
     /**
@@ -197,7 +197,7 @@ export function createPreviewRenderer(canvas) {
         manager.drawCutLines(job.cutLines, '#000000', 0.5);
       }
       
-      manager.drawLabel(`${job.orderNumber} FRONT CUT`, 2, 0);
+      manager.drawLabel(`${job.orderNumber} FRONT CUT`, job.marginPt);
     },
     
     /**
@@ -212,7 +212,7 @@ export function createPreviewRenderer(canvas) {
         manager.drawCutLines(job.backCutLines, '#000000', 0.5);
       }
       
-      manager.drawLabel(`${job.orderNumber} BACK CUT`, 2, 0);
+      manager.drawLabel(`${job.orderNumber} BACK CUT`, job.marginPt);
     },
   };
   
