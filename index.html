@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infive Print Setup — Print Imposition & Cut File Generator</title>
+  <meta name="description" content="Professional print imposition tool for generating front/back layouts and cut files for double-sided printing jobs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="app-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      Infive Print Setup
+    </div>
+    <span class="app-subtitle">Print Imposition & Cut File Generator</span>
+  </header>
+
+  <!-- Notifications -->
+  <div id="notifications" class="notification-container"></div>
+
+  <!-- Main Layout -->
+  <div class="app-container">
+
+    <!-- ===== LEFT SIDEBAR — Controls ===== -->
+    <div class="sidebar">
+
+      <!-- Order Number -->
+      <div class="card" id="card-order">
+        <div class="card-title"><span class="card-icon">📋</span> Order Number</div>
+        <div class="form-group">
+          <input type="text" id="orderNumber" class="form-input" placeholder="e.g. BC-2026-00125" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
+      <!-- File Upload -->
+      <div class="card" id="card-upload">
+        <div class="card-title"><span class="card-icon">📁</span> Artwork Files</div>
+        <div class="upload-row">
+          <!-- Front -->
+          <div class="upload-area" id="frontUpload">
+            <input type="file" id="frontFileInput" accept=".pdf,.png,.jpg,.jpeg">
+            <div class="upload-icon">📄</div>
+            <div class="upload-label-text">FRONT</div>
+            <div class="upload-hint">PDF, PNG, JPG</div>
+            <div class="upload-file-info" id="frontFileName"></div>
+            <div class="upload-file-dims" id="frontFileDims"></div>
+          </div>
+          <!-- Back -->
+          <div class="upload-area" id="backUpload">
+            <input type="file" id="backFileInput" accept=".pdf,.png,.jpg,.jpeg">
+            <div class="upload-icon">📄</div>
+            <div class="upload-label-text">BACK</div>
+            <div class="upload-hint">PDF, PNG, JPG</div>
+            <div class="upload-file-info" id="backFileName"></div>
+            <div class="upload-file-dims" id="backFileDims"></div>
+          </div>
+        </div>
+        <!-- Dimension match -->
+        <div id="dimensionMatch" class="hidden" style="margin-top: 10px; text-align: center;"></div>
+        <!-- Dimension warning -->
+        <div id="dimensionWarning" class="dimension-warning hidden">
+          <span class="warn-icon">⚠️</span>
+          <span id="dimensionWarningText"></span>
+        </div>
+      </div>
+
+      <!-- File Info Panel -->
+      <div class="card hidden" id="card-fileinfo">
+        <div class="card-title"><span class="card-icon">📐</span> File Information</div>
+        <div class="form-row" style="gap: 16px;">
+          <div>
+            <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); margin-bottom:6px;">FRONT</div>
+            <div class="info-grid" id="frontInfoGrid"></div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); margin-bottom:6px;">BACK</div>
+            <div class="info-grid" id="backInfoGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Units & Measurements -->
+      <div class="card" id="card-settings">
+        <div class="card-title"><span class="card-icon">📏</span> Measurements</div>
+
+        <!-- Unit -->
+        <div class="form-group">
+          <label class="form-label" for="unitSelect">Unit</label>
+          <select id="unitSelect" class="form-select">
+            <option value="mm" selected>Millimeters (mm)</option>
+            <option value="cm">Centimeters (cm)</option>
+            <option value="in">Inches (in)</option>
+            <option value="pt">Points (pt)</option>
+          </select>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Artwork Size (read-only) -->
+        <div class="form-group">
+          <label class="form-label">Artwork Size</label>
+          <div class="form-row">
+            <div class="input-group">
+              <input type="text" id="artworkWidth" class="form-input" readonly tabindex="-1">
+              <span class="input-suffix" id="artworkWidthUnit">mm</span>
+            </div>
+            <div class="input-group">
+              <input type="text" id="artworkHeight" class="form-input" readonly tabindex="-1">
+              <span class="input-suffix" id="artworkHeightUnit">mm</span>
+            </div>
+          </div>
+          <div style="margin-top:6px;">
+            <span class="scale-badge">🔒 Artwork Scale: 100%</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Bleed -->
+        <div class="form-group">
+          <label class="form-label" for="bleedInput">Bleed (per side)</label>
+          <div class="input-group">
+            <input type="number" id="bleedInput" class="form-input" value="3" min="0" step="0.5">
+            <span class="input-suffix" id="bleedUnit">mm</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Trim Size -->
+        <div class="form-group">
+          <label class="form-label">Trim / Cut Size</label>
+          <div class="trim-mode-toggle">
+            <button class="trim-mode-btn active" data-mode="auto" id="trimModeAuto">Auto</button>
+            <button class="trim-mode-btn" data-mode="manual" id="trimModeManual">Manual</button>
+          </div>
+          <div class="form-row">
+            <div class="input-group">
+              <input type="number" id="trimWidth" class="form-input" step="0.01" readonly>
+              <span class="input-suffix" id="trimWidthUnit">mm</span>
+            </div>
+            <div class="input-group">
+              <input type="number" id="trimHeight" class="form-input" step="0.01" readonly>
+              <span class="input-suffix" id="trimHeightUnit">mm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paper & Layout -->
+      <div class="card" id="card-paper">
+        <div class="card-title"><span class="card-icon">📃</span> Paper & Layout</div>
+
+        <!-- Paper Size -->
+        <div class="form-group">
+          <label class="form-label" for="paperSelect">Paper Size</label>
+          <select id="paperSelect" class="form-select">
+            <option value="A5">A5 (148 × 210 mm)</option>
+            <option value="A4">A4 (210 × 297 mm)</option>
+            <option value="A3" selected>A3 (297 × 420 mm)</option>
+            <option value="SRA4">SRA4 (225 × 320 mm)</option>
+            <option value="SRA3">SRA3 (320 × 450 mm)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <!-- Custom Paper Dimensions (hidden by default) -->
+        <div class="form-group hidden" id="customPaperGroup">
+          <div class="form-row">
+            <div class="input-group">
+              <input type="number" id="customPaperWidth" class="form-input" placeholder="Width" step="0.1">
+              <span class="input-suffix" id="customPaperWidthUnit">mm</span>
+            </div>
+            <div class="input-group">
+              <input type="number" id="customPaperHeight" class="form-input" placeholder="Height" step="0.1">
+              <span class="input-suffix" id="customPaperHeightUnit">mm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Orientation -->
+        <div class="form-group">
+          <label class="form-label" for="orientationSelect">Orientation</label>
+          <select id="orientationSelect" class="form-select">
+            <option value="auto" selected>Auto (maximize copies)</option>
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Non-Printable Margin -->
+        <div class="form-group">
+          <label class="form-label" for="marginInput">Non-Printable Margin</label>
+          <div class="input-group">
+            <input type="number" id="marginInput" class="form-input" value="5" min="0" step="0.5">
+            <span class="input-suffix" id="marginUnit">mm</span>
+          </div>
+        </div>
+
+        <!-- Gap -->
+        <div class="form-group">
+          <label class="form-label" for="gapInput">Gap Between Copies</label>
+          <div class="input-group">
+            <input type="number" id="gapInput" class="form-input" value="0" min="0" step="0.5">
+            <span class="input-suffix" id="gapUnit">mm</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Duplex -->
+        <div class="form-group">
+          <label class="form-label" for="duplexSelect">Duplex Mode</label>
+          <select id="duplexSelect" class="form-select">
+            <option value="long-edge" selected>Flip on Long Edge</option>
+            <option value="short-edge">Flip on Short Edge</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CENTER PANEL — Preview ===== -->
+    <div class="main-content">
+      <!-- Preview Tabs -->
+      <div class="preview-tabs" id="previewTabs">
+        <button class="preview-tab active" data-view="front">Front</button>
+        <button class="preview-tab" data-view="back">Back</button>
+        <button class="preview-tab" data-view="frontCut">Front Cut</button>
+        <button class="preview-tab" data-view="backCut">Back Cut</button>
+      </div>
+
+      <!-- Preview Canvas -->
+      <div class="preview-canvas-wrapper" id="previewWrapper">
+        <canvas id="previewCanvas"></canvas>
+        <div class="preview-empty" id="previewEmpty">
+          <div class="preview-empty-icon">🖨️</div>
+          <div class="preview-empty-text">Upload artwork and configure settings to see preview</div>
+        </div>
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoomOut" title="Zoom Out">−</button>
+          <button class="zoom-btn" id="zoomFit" title="Fit to View">Fit</button>
+          <button class="zoom-btn" id="zoom100" title="100%">100%</button>
+          <button class="zoom-btn" id="zoomIn" title="Zoom In">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT PANEL — Results & Output ===== -->
+    <div class="sidebar-right">
+      <!-- Results Placeholder (shown before layout calculation) -->
+      <div class="card" id="card-results-placeholder">
+        <div class="results-placeholder">
+          <div class="results-placeholder-icon">📊</div>
+          <div class="results-placeholder-title">Layout &amp; Job Results</div>
+          <div class="results-placeholder-text">
+            Upload Front &amp; Back artwork to view imposition results, copy count, sheet preview, and download PDFs.
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout Result -->
+      <div class="card hidden" id="card-layout">
+        <div class="card-title"><span class="card-icon">📊</span> Layout Result</div>
+        <div class="layout-result" id="layoutResult"></div>
+      </div>
+
+      <!-- Job Summary -->
+      <div class="card hidden" id="card-summary">
+        <div class="card-title"><span class="card-icon">📝</span> Job Summary</div>
+        <div class="job-summary" id="jobSummary"></div>
+      </div>
+
+      <!-- Generate Button -->
+      <button class="btn btn-primary generate-btn btn-block" id="generateBtn" disabled>
+        ⚡ Generate PDFs
+      </button>
+
+      <!-- Downloads -->
+      <div class="card hidden" id="card-downloads">
+        <div class="card-title"><span class="card-icon">💾</span> Downloads</div>
+        <div class="download-grid" id="downloadGrid">
+          <button class="download-btn" id="dlFront" disabled>
+            <span class="dl-icon">📥</span><span class="dl-text">Front PDF</span>
+          </button>
+          <button class="download-btn" id="dlBack" disabled>
+            <span class="dl-icon">📥</span><span class="dl-text">Back PDF</span>
+          </button>
+          <button class="download-btn" id="dlFrontCut" disabled>
+            <span class="dl-icon">✂️</span><span class="dl-text">Front Cut PDF</span>
+          </button>
+          <button class="download-btn" id="dlBackCut" disabled>
+            <span class="dl-icon">✂️</span><span class="dl-text">Back Cut PDF</span>
+          </button>
+          <button class="download-btn download-all-btn" id="dlAll" disabled>
+            📦 Download All (ZIP)
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
