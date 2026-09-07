@@ -640,9 +640,21 @@ function updatePaperFromPreset() {
   const preset = elements.paperSelect.value;
   if (preset !== 'custom' && PAPER_PRESETS[preset]) {
     const paper = PAPER_PRESETS[preset];
-    job.paperWidthPt = toPoints(paper.widthMm, 'mm');
-    job.paperHeightPt = toPoints(paper.heightMm, 'mm');
-    job.paperPreset = preset;
+    // Always start from the canonical portrait dimensions
+    let w = toPoints(paper.widthMm, 'mm');
+    let h = toPoints(paper.heightMm, 'mm');
+
+    // Apply explicit orientation — swap if landscape is selected
+    const orientation = elements.orientationSelect.value;
+    if (orientation === 'landscape' && w < h) {
+      [w, h] = [h, w];
+    } else if (orientation === 'portrait' && h < w) {
+      [w, h] = [h, w];
+    }
+
+    job.paperWidthPt  = w;
+    job.paperHeightPt = h;
+    job.paperPreset   = preset;
   }
 }
 
