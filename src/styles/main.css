@@ -321,6 +321,36 @@ body {
   background: var(--success-bg);
 }
 
+/* Remove button — only shows when a file is loaded */
+.upload-remove-btn {
+  display: none;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--error, #e05);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.upload-area.has-file .upload-remove-btn {
+  display: flex;
+}
+
+.upload-remove-btn:hover {
+  background: #c00;
+  transform: scale(1.15);
+}
+
 .upload-area input[type="file"] {
   display: none;
 }

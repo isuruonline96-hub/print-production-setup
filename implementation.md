@@ -499,6 +499,7 @@ GitHub Actions handles the rest automatically within ~2 minutes.
 | v1.6 | 2026-09-07 | **Live order number:** preview updates on every keystroke |
 | v1.6 | 2026-09-07 | **Label repositioned** inside printable area (not at raw paper edge) |
 | v1.6 | 2026-09-07 | **White knockout background** on label so cut lines don't obscure order number |
+| v1.7 | 2026-09-07 | **Artwork remove button:** ✕ button on each upload area to clear a file without refreshing |
 
 ---
 

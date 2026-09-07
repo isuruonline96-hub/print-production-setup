@@ -43,6 +43,8 @@ const elements = {
   frontFileDims: $('frontFileDims'),
   backFileName: $('backFileName'),
   backFileDims: $('backFileDims'),
+  frontRemoveBtn: $('frontRemoveBtn'),
+  backRemoveBtn: $('backRemoveBtn'),
   dimensionMatch: $('dimensionMatch'),
   dimensionWarning: $('dimensionWarning'),
   dimensionWarningText: $('dimensionWarningText'),
@@ -120,6 +122,10 @@ function bindEvents() {
   // File inputs
   elements.frontFileInput.addEventListener('change', (e) => handleFileUpload(e, 'front'));
   elements.backFileInput.addEventListener('change', (e) => handleFileUpload(e, 'back'));
+  
+  // Remove buttons — stop click from bubbling to upload area
+  elements.frontRemoveBtn.addEventListener('click', (e) => { e.stopPropagation(); clearFile('front'); });
+  elements.backRemoveBtn.addEventListener('click', (e) => { e.stopPropagation(); clearFile('back'); });
   
   // Drag & drop
   setupDragDrop(elements.frontUpload, elements.frontFileInput, 'front');
@@ -279,6 +285,53 @@ async function handleFileUpload(e, side) {
   } catch (err) {
     showNotification(err.message || 'Unable to read the uploaded file.', 'error');
   }
+}
+
+// ============================================================
+// Clear / Remove File
+// ============================================================
+function clearFile(side) {
+  if (side === 'front') {
+    frontFileInfo = null;
+    job.frontFile = null;
+    job.frontFileInfo = null;
+    
+    elements.frontUpload.classList.remove('has-file');
+    elements.frontFileName.textContent = '';
+    elements.frontFileDims.textContent = '';
+    elements.frontUpload.querySelector('.upload-icon').textContent = '\ud83d\udcc4';
+    elements.frontFileInput.value = ''; // allow re-uploading same file
+  } else {
+    backFileInfo = null;
+    job.backFile = null;
+    job.backFileInfo = null;
+    job.backArtworkWidthPt = null;
+    job.backArtworkHeightPt = null;
+    
+    elements.backUpload.classList.remove('has-file');
+    elements.backFileName.textContent = '';
+    elements.backFileDims.textContent = '';
+    elements.backUpload.querySelector('.upload-icon').textContent = '\ud83d\udcc4';
+    elements.backFileInput.value = '';
+  }
+  
+  // Re-derive primary artwork size from whichever file remains
+  const primaryFile = frontFileInfo || backFileInfo;
+  if (primaryFile) {
+    job.artworkWidthPt = primaryFile.widthPt;
+    job.artworkHeightPt = primaryFile.heightPt;
+  } else {
+    job.artworkWidthPt = 0;
+    job.artworkHeightPt = 0;
+  }
+
+  showNotification(`${side === 'front' ? 'Front' : 'Back'} artwork removed.`, 'info', 2500);
+  
+  checkDimensionMatch();
+  updateFileInfoPanel();
+  updateArtworkDisplay();
+  recalculateLayout();
+  updateGenerateButton();
 }
 
 // ============================================================
