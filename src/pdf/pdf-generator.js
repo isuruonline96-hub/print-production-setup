@@ -1,11 +1,17 @@
 /**
  * Master PDF Generator
  * 
- * Creates all 4 PDF files from the Job model:
- * 1. {ORDER}-front.pdf     — Cut lines (behind) + Front artwork (on top)
- * 2. {ORDER}-back.pdf      — Cut lines (behind) + Back artwork (on top)
- * 3. {ORDER}-front-cut.pdf — Front cut lines ONLY (no artwork)
- * 4. {ORDER}-back-cut.pdf  — Back cut lines ONLY (no artwork)
+ * Creates all PDF files from the Job model:
+ * 
+ * Normal Print (4 PDFs):
+ *   1. {ORDER}-front.pdf      — Cut lines (behind) + Front artwork (on top)
+ *   2. {ORDER}-back.pdf       — Cut lines (behind) + Back artwork (on top)
+ *   3. {ORDER}-front-cut.pdf  — Front cut lines ONLY (no artwork)
+ *   4. {ORDER}-back-cut.pdf   — Back cut lines ONLY (no artwork)
+ *
+ * Foil Print (6 PDFs, adds):
+ *   5. {ORDER}-front-foil.pdf — Cut lines (behind) + Front foil artwork (on top)
+ *   6. {ORDER}-back-foil.pdf  — Cut lines (behind) + Back foil artwork (on top)
  *
  * Layer order for print PDFs: cut lines are drawn FIRST so artwork covers them.
  * The cut file PDFs contain cut lines only and are sent separately to the cutter.
@@ -17,12 +23,34 @@ import { drawCutLines } from './cut-line-renderer.js';
 import { drawLabel } from './label-renderer.js';
 
 /**
- * Generate all 4 PDFs for a job.
+ * Generate all PDFs for a job.
+ * Normal mode: 4 PDFs. Foil mode: 6 PDFs.
  * 
  * @param {object} job - The complete job model.
- * @returns {Promise<object>} Object with front, back, frontCut, backCut as Uint8Arrays.
+ * @returns {Promise<object>} Object with front, back, [frontFoil, backFoil], frontCut, backCut.
  */
 export async function generateAllPDFs(job) {
+  if (job.printType === 'foil') {
+    const [front, back, frontFoil, backFoil, frontCut, backCut] = await Promise.all([
+      generateFrontPDF(job),
+      generateBackPDF(job),
+      generateFrontFoilPDF(job),
+      generateBackFoilPDF(job),
+      generateFrontCutPDF(job),
+      generateBackCutPDF(job),
+    ]);
+
+    return {
+      front:     { data: front,     filename: `${job.orderNumber}-front.pdf` },
+      back:      { data: back,      filename: `${job.orderNumber}-back.pdf` },
+      frontFoil: { data: frontFoil, filename: `${job.orderNumber}-front-foil.pdf` },
+      backFoil:  { data: backFoil,  filename: `${job.orderNumber}-back-foil.pdf` },
+      frontCut:  { data: frontCut,  filename: `${job.orderNumber}-front-cut.pdf` },
+      backCut:   { data: backCut,   filename: `${job.orderNumber}-back-cut.pdf` },
+    };
+  }
+
+  // Normal mode — 4 PDFs
   const [front, back, frontCut, backCut] = await Promise.all([
     generateFrontPDF(job),
     generateBackPDF(job),
@@ -31,10 +59,10 @@ export async function generateAllPDFs(job) {
   ]);
 
   return {
-    front: { data: front, filename: `${job.orderNumber}-front.pdf` },
-    back: { data: back, filename: `${job.orderNumber}-back.pdf` },
+    front:    { data: front,    filename: `${job.orderNumber}-front.pdf` },
+    back:     { data: back,     filename: `${job.orderNumber}-back.pdf` },
     frontCut: { data: frontCut, filename: `${job.orderNumber}-front-cut.pdf` },
-    backCut: { data: backCut, filename: `${job.orderNumber}-back-cut.pdf` },
+    backCut:  { data: backCut,  filename: `${job.orderNumber}-back-cut.pdf` },
   };
 }
 
@@ -92,6 +120,66 @@ export async function generateBackPDF(job) {
 
   // Draw label (always on top)
   await drawLabel(doc, page, job.orderNumber, 'BACK', job.paperHeightPt, job.marginPt);
+
+  return await doc.save();
+}
+
+/**
+ * Generate Front Foil PDF — cut lines BEHIND foil artwork.
+ * Uses same positions and paper as Front PDF.
+ * Foil artwork is optional — if absent, page contains cut lines only.
+ */
+export async function generateFrontFoilPDF(job) {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([job.paperWidthPt, job.paperHeightPt]);
+
+  // Draw cut lines FIRST (for registration)
+  drawCutLines(page, job.cutLines, job.paperHeightPt);
+
+  // Embed front foil artwork on top (only if a file was uploaded)
+  if (job.frontFoilFile) {
+    await embedArtwork(
+      doc, page, job.frontFoilFile,
+      job.layout.positions,
+      job.layout.artworkPlacementWidth,
+      job.layout.artworkPlacementHeight,
+      job.paperHeightPt,
+      job.artworkRotated,
+    );
+  }
+
+  // Draw label (always on top)
+  await drawLabel(doc, page, job.orderNumber, 'FRONT FOIL', job.paperHeightPt, job.marginPt);
+
+  return await doc.save();
+}
+
+/**
+ * Generate Back Foil PDF — cut lines BEHIND foil artwork.
+ * Uses same positions and paper as Back PDF.
+ * Foil artwork is optional — if absent, page contains cut lines only.
+ */
+export async function generateBackFoilPDF(job) {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([job.paperWidthPt, job.paperHeightPt]);
+
+  // Draw back cut lines FIRST (for registration)
+  drawCutLines(page, job.backCutLines, job.paperHeightPt);
+
+  // Embed back foil artwork on top (only if a file was uploaded)
+  if (job.backFoilFile) {
+    await embedArtwork(
+      doc, page, job.backFoilFile,
+      job.backPositions,
+      job.layout.artworkPlacementWidth,
+      job.layout.artworkPlacementHeight,
+      job.paperHeightPt,
+      job.artworkRotated,
+    );
+  }
+
+  // Draw label (always on top)
+  await drawLabel(doc, page, job.orderNumber, 'BACK FOIL', job.paperHeightPt, job.marginPt);
 
   return await doc.save();
 }

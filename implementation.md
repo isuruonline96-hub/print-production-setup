@@ -500,6 +500,7 @@ GitHub Actions handles the rest automatically within ~2 minutes.
 | v1.6 | 2026-09-07 | **Label repositioned** inside printable area (not at raw paper edge) |
 | v1.6 | 2026-09-07 | **White knockout background** on label so cut lines don't obscure order number |
 | v1.7 | 2026-09-07 | **Artwork remove button:** ✕ button on each upload area to clear a file without refreshing |
+| v1.8 | 2026-09-07 | **Foil Print mode:** Print Type dropdown, front/back foil upload areas, 2 extra preview tabs, 6-PDF output |
 
 ---
 

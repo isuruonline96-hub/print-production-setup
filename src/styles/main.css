@@ -351,6 +351,54 @@ body {
   transform: scale(1.15);
 }
 
+/* ---------- Foil Upload Variant (amber/gold) ---------- */
+.upload-area.foil-upload {
+  border-color: #b45309;
+}
+
+.upload-area.foil-upload .upload-icon {
+  color: #f59e0b;
+}
+
+.upload-area.foil-upload .upload-label-text {
+  color: #f59e0b;
+}
+
+.upload-area.foil-upload:hover {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.upload-area.foil-upload.has-file {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+/* Foil section top separator */
+.foil-section.upload-row {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #b45309;
+}
+
+/* Foil tab gold accent when active */
+.preview-tab[data-view="frontFoil"].active,
+.preview-tab[data-view="backFoil"].active {
+  background: rgba(245, 158, 11, 0.18);
+  border-bottom-color: #f59e0b;
+  color: #f59e0b;
+}
+
+/* Foil download buttons gold tint */
+.download-btn.foil-dl {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.download-btn.foil-dl:not(:disabled):hover {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+}
+
 .upload-area input[type="file"] {
   display: none;
 }

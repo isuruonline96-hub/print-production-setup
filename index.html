@@ -38,11 +38,19 @@
         <div class="form-group">
           <input type="text" id="orderNumber" class="form-input" placeholder="e.g. BC-2026-00125" autocomplete="off" spellcheck="false">
         </div>
+        <div class="form-group">
+          <label class="form-label" for="printType">Print Type</label>
+          <select id="printType" class="form-select">
+            <option value="normal" selected>Normal Print</option>
+            <option value="foil">✨ Foil Print</option>
+          </select>
+        </div>
       </div>
 
       <!-- File Upload -->
       <div class="card" id="card-upload">
         <div class="card-title"><span class="card-icon">📁</span> Artwork Files</div>
+        <!-- Normal artwork row -->
         <div class="upload-row">
           <!-- Front -->
           <div class="upload-area" id="frontUpload">
@@ -63,6 +71,29 @@
             <div class="upload-hint">PDF, PNG, JPG</div>
             <div class="upload-file-info" id="backFileName"></div>
             <div class="upload-file-dims" id="backFileDims"></div>
+          </div>
+        </div>
+        <!-- Foil artwork row (hidden in Normal mode) -->
+        <div class="upload-row hidden foil-section" id="foilUploadRow">
+          <!-- Front Foil -->
+          <div class="upload-area foil-upload" id="frontFoilUpload">
+            <input type="file" id="frontFoilFileInput" accept=".pdf,.png,.jpg,.jpeg">
+            <button class="upload-remove-btn" id="frontFoilRemoveBtn" title="Remove front foil artwork">✕</button>
+            <div class="upload-icon">✨</div>
+            <div class="upload-label-text">FRONT FOIL</div>
+            <div class="upload-hint">PDF, PNG, JPG</div>
+            <div class="upload-file-info" id="frontFoilFileName"></div>
+            <div class="upload-file-dims" id="frontFoilFileDims"></div>
+          </div>
+          <!-- Back Foil -->
+          <div class="upload-area foil-upload" id="backFoilUpload">
+            <input type="file" id="backFoilFileInput" accept=".pdf,.png,.jpg,.jpeg">
+            <button class="upload-remove-btn" id="backFoilRemoveBtn" title="Remove back foil artwork">✕</button>
+            <div class="upload-icon">✨</div>
+            <div class="upload-label-text">BACK FOIL</div>
+            <div class="upload-hint">PDF, PNG, JPG</div>
+            <div class="upload-file-info" id="backFoilFileName"></div>
+            <div class="upload-file-dims" id="backFoilFileDims"></div>
           </div>
         </div>
         <!-- Dimension match -->
@@ -237,6 +268,8 @@
       <div class="preview-tabs" id="previewTabs">
         <button class="preview-tab active" data-view="front">Front</button>
         <button class="preview-tab" data-view="back">Back</button>
+        <button class="preview-tab hidden foil-section" data-view="frontFoil">✨ Front Foil</button>
+        <button class="preview-tab hidden foil-section" data-view="backFoil">✨ Back Foil</button>
         <button class="preview-tab" data-view="frontCut">Front Cut</button>
         <button class="preview-tab" data-view="backCut">Back Cut</button>
       </div>
@@ -296,6 +329,12 @@
           </button>
           <button class="download-btn" id="dlBack" disabled>
             <span class="dl-icon">📥</span><span class="dl-text">Back PDF</span>
+          </button>
+          <button class="download-btn hidden foil-section foil-dl" id="dlFrontFoil" disabled>
+            <span class="dl-icon">✨</span><span class="dl-text">Front Foil PDF</span>
+          </button>
+          <button class="download-btn hidden foil-section foil-dl" id="dlBackFoil" disabled>
+            <span class="dl-icon">✨</span><span class="dl-text">Back Foil PDF</span>
           </button>
           <button class="download-btn" id="dlFrontCut" disabled>
             <span class="dl-icon">✂️</span><span class="dl-text">Front Cut PDF</span>

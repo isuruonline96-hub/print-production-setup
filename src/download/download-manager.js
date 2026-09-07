@@ -2,6 +2,7 @@
  * Download Manager
  * 
  * Handles individual PDF downloads and ZIP bundle creation.
+ * Supports both Normal mode (4 PDFs) and Foil mode (6 PDFs).
  */
 
 import JSZip from 'jszip';
@@ -19,18 +20,24 @@ export function downloadPDF(data, filename) {
 }
 
 /**
- * Download all 4 PDFs as a ZIP file.
+ * Download all PDFs as a ZIP file.
+ * Automatically includes foil PDFs if present in the pdfs object.
  * 
- * @param {object} pdfs - Object with front, back, frontCut, backCut.
+ * @param {object} pdfs - Object with front, back, [frontFoil, backFoil], frontCut, backCut.
  * @param {string} orderNumber - The order number for the ZIP filename.
  */
 export async function downloadAllAsZip(pdfs, orderNumber) {
   const zip = new JSZip();
   
-  zip.file(pdfs.front.filename, pdfs.front.data);
-  zip.file(pdfs.back.filename, pdfs.back.data);
+  zip.file(pdfs.front.filename,    pdfs.front.data);
+  zip.file(pdfs.back.filename,     pdfs.back.data);
+
+  // Foil PDFs (only present in Foil Print mode)
+  if (pdfs.frontFoil) zip.file(pdfs.frontFoil.filename, pdfs.frontFoil.data);
+  if (pdfs.backFoil)  zip.file(pdfs.backFoil.filename,  pdfs.backFoil.data);
+
   zip.file(pdfs.frontCut.filename, pdfs.frontCut.data);
-  zip.file(pdfs.backCut.filename, pdfs.backCut.data);
+  zip.file(pdfs.backCut.filename,  pdfs.backCut.data);
   
   const blob = await zip.generateAsync({ type: 'blob' });
   saveAs(blob, `${orderNumber}-print-files.zip`);

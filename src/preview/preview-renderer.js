@@ -4,7 +4,8 @@
  * Renders the same Job model used for PDF generation onto an HTML5 canvas.
  * Uses the exact same coordinate system and positions as the PDF generator.
  * 
- * Four views: Front, Back, Front Cut, Back Cut.
+ * Six views: Front, Back, Front Foil, Back Foil, Front Cut, Back Cut.
+ * Foil views use amber/gold color scheme to distinguish from normal artwork.
  */
 
 import { createCanvasManager } from './canvas-utils.js';
@@ -19,9 +20,11 @@ import { getArtworkPreviewElement } from './artwork-preview.js';
 export function createPreviewRenderer(canvas) {
   const manager = createCanvasManager(canvas);
   let currentJob = null;
-  let currentView = 'front'; // 'front', 'back', 'frontCut', 'backCut'
+  let currentView = 'front'; // 'front', 'back', 'frontFoil', 'backFoil', 'frontCut', 'backCut'
   let frontElement = null;
   let backElement = null;
+  let frontFoilElement = null;
+  let backFoilElement = null;
   let loadRequestId = 0;
 
   async function loadArtworks(job) {
@@ -29,16 +32,22 @@ export function createPreviewRenderer(canvas) {
     if (!job) {
       frontElement = null;
       backElement = null;
+      frontFoilElement = null;
+      backFoilElement = null;
       return;
     }
 
-    const pFront = job.frontFile ? getArtworkPreviewElement(job.frontFile) : Promise.resolve(null);
-    const pBack = job.backFile ? getArtworkPreviewElement(job.backFile) : Promise.resolve(null);
+    const pFront     = job.frontFile     ? getArtworkPreviewElement(job.frontFile)     : Promise.resolve(null);
+    const pBack      = job.backFile      ? getArtworkPreviewElement(job.backFile)      : Promise.resolve(null);
+    const pFrontFoil = job.frontFoilFile ? getArtworkPreviewElement(job.frontFoilFile) : Promise.resolve(null);
+    const pBackFoil  = job.backFoilFile  ? getArtworkPreviewElement(job.backFoilFile)  : Promise.resolve(null);
 
-    const [fe, be] = await Promise.all([pFront, pBack]);
+    const [fe, be, ffe, bfe] = await Promise.all([pFront, pBack, pFrontFoil, pBackFoil]);
     if (reqId === loadRequestId) {
-      frontElement = fe;
-      backElement = be;
+      frontElement     = fe;
+      backElement      = be;
+      frontFoilElement = ffe;
+      backFoilElement  = bfe;
       renderer.render();
     }
   }
@@ -58,6 +67,8 @@ export function createPreviewRenderer(canvas) {
       } else {
         frontElement = null;
         backElement = null;
+        frontFoilElement = null;
+        backFoilElement = null;
         this.render();
       }
     },
@@ -73,10 +84,10 @@ export function createPreviewRenderer(canvas) {
     /**
      * Zoom controls.
      */
-    zoomIn() { manager.zoomIn(); this.render(); },
-    zoomOut() { manager.zoomOut(); this.render(); },
-    fitToCanvas() { manager.fitToCanvas(); this.render(); },
-    zoom100() { manager.zoom100(); this.render(); },
+    zoomIn()      { manager.zoomIn();       this.render(); },
+    zoomOut()     { manager.zoomOut();      this.render(); },
+    fitToCanvas() { manager.fitToCanvas();  this.render(); },
+    zoom100()     { manager.zoom100();      this.render(); },
     
     /**
      * Handle canvas resize.
@@ -102,18 +113,12 @@ export function createPreviewRenderer(canvas) {
       manager.beginDraw();
       
       switch (currentView) {
-        case 'front':
-          this._renderFront();
-          break;
-        case 'back':
-          this._renderBack();
-          break;
-        case 'frontCut':
-          this._renderFrontCut();
-          break;
-        case 'backCut':
-          this._renderBackCut();
-          break;
+        case 'front':     this._renderFront();     break;
+        case 'back':      this._renderBack();      break;
+        case 'frontFoil': this._renderFrontFoil(); break;
+        case 'backFoil':  this._renderBackFoil();  break;
+        case 'frontCut':  this._renderFrontCut();  break;
+        case 'backCut':   this._renderBackCut();   break;
       }
       
       manager.endDraw();
@@ -183,6 +188,68 @@ export function createPreviewRenderer(canvas) {
       }
       
       manager.drawLabel(`${job.orderNumber} BACK`, job.marginPt);
+    },
+
+    /**
+     * Render Front Foil view: paper + margin + foil artwork + cut lines + label.
+     * Uses amber/gold color scheme to distinguish from normal artwork views.
+     */
+    _renderFrontFoil() {
+      const job = currentJob;
+      const layout = job.layout;
+
+      manager.drawPaper();
+      manager.drawMarginBoundary(job.marginPt);
+
+      // Foil artwork copies (amber placeholder when no foil file)
+      manager.drawArtworkImages(
+        layout.positions,
+        layout.artworkPlacementWidth,
+        layout.artworkPlacementHeight,
+        frontFoilElement,
+        job.artworkWidthPt,
+        job.artworkHeightPt,
+        job.artworkRotated,
+        'rgba(245, 158, 11, 0.15)',
+        'rgba(245, 158, 11, 0.4)',
+      );
+
+      // Cut lines (for registration reference)
+      if (job.cutLines) {
+        manager.drawCutLines(job.cutLines, '#e53935', 0.75);
+      }
+
+      manager.drawLabel(`${job.orderNumber} FRONT FOIL`, job.marginPt);
+    },
+
+    /**
+     * Render Back Foil view: paper + margin + foil artwork + cut lines + label.
+     */
+    _renderBackFoil() {
+      const job = currentJob;
+
+      manager.drawPaper();
+      manager.drawMarginBoundary(job.marginPt);
+
+      if (job.backPositions) {
+        manager.drawArtworkImages(
+          job.backPositions,
+          job.layout.artworkPlacementWidth,
+          job.layout.artworkPlacementHeight,
+          backFoilElement,
+          job.backArtworkWidthPt || job.artworkWidthPt,
+          job.backArtworkHeightPt || job.artworkHeightPt,
+          job.artworkRotated,
+          'rgba(245, 158, 11, 0.15)',
+          'rgba(245, 158, 11, 0.4)',
+        );
+      }
+
+      if (job.backCutLines) {
+        manager.drawCutLines(job.backCutLines, '#e53935', 0.75);
+      }
+
+      manager.drawLabel(`${job.orderNumber} BACK FOIL`, job.marginPt);
     },
     
     /**

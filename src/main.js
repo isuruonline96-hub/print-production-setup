@@ -22,6 +22,8 @@ import { initNotifications, showNotification, clearNotifications } from './ui/no
 let job = createJob();
 let frontFileInfo = null;
 let backFileInfo = null;
+let frontFoilFileInfo = null;
+let backFoilFileInfo = null;
 let generatedPDFs = null;
 let previewRenderer = null;
 let currentUnit = 'mm';
@@ -34,67 +36,83 @@ const $ = (id) => document.getElementById(id);
 const elements = {
   // Order
   orderNumber: $('orderNumber'),
+  printType:   $('printType'),
   // Upload
   frontUpload: $('frontUpload'),
-  backUpload: $('backUpload'),
+  backUpload:  $('backUpload'),
   frontFileInput: $('frontFileInput'),
-  backFileInput: $('backFileInput'),
+  backFileInput:  $('backFileInput'),
   frontFileName: $('frontFileName'),
   frontFileDims: $('frontFileDims'),
-  backFileName: $('backFileName'),
-  backFileDims: $('backFileDims'),
+  backFileName:  $('backFileName'),
+  backFileDims:  $('backFileDims'),
   frontRemoveBtn: $('frontRemoveBtn'),
-  backRemoveBtn: $('backRemoveBtn'),
-  dimensionMatch: $('dimensionMatch'),
-  dimensionWarning: $('dimensionWarning'),
+  backRemoveBtn:  $('backRemoveBtn'),
+  // Foil Upload
+  foilUploadRow:      $('foilUploadRow'),
+  frontFoilUpload:    $('frontFoilUpload'),
+  backFoilUpload:     $('backFoilUpload'),
+  frontFoilFileInput: $('frontFoilFileInput'),
+  backFoilFileInput:  $('backFoilFileInput'),
+  frontFoilFileName:  $('frontFoilFileName'),
+  frontFoilFileDims:  $('frontFoilFileDims'),
+  backFoilFileName:   $('backFoilFileName'),
+  backFoilFileDims:   $('backFoilFileDims'),
+  frontFoilRemoveBtn: $('frontFoilRemoveBtn'),
+  backFoilRemoveBtn:  $('backFoilRemoveBtn'),
+  // Dimension match
+  dimensionMatch:       $('dimensionMatch'),
+  dimensionWarning:     $('dimensionWarning'),
   dimensionWarningText: $('dimensionWarningText'),
   // File info
-  cardFileinfo: $('card-fileinfo'),
+  cardFileinfo:  $('card-fileinfo'),
   frontInfoGrid: $('frontInfoGrid'),
-  backInfoGrid: $('backInfoGrid'),
+  backInfoGrid:  $('backInfoGrid'),
   // Settings
-  unitSelect: $('unitSelect'),
-  artworkWidth: $('artworkWidth'),
+  unitSelect:    $('unitSelect'),
+  artworkWidth:  $('artworkWidth'),
   artworkHeight: $('artworkHeight'),
-  bleedInput: $('bleedInput'),
-  trimModeAuto: $('trimModeAuto'),
+  bleedInput:    $('bleedInput'),
+  trimModeAuto:   $('trimModeAuto'),
   trimModeManual: $('trimModeManual'),
-  trimWidth: $('trimWidth'),
+  trimWidth:  $('trimWidth'),
   trimHeight: $('trimHeight'),
   // Paper
-  paperSelect: $('paperSelect'),
-  customPaperGroup: $('customPaperGroup'),
-  customPaperWidth: $('customPaperWidth'),
-  customPaperHeight: $('customPaperHeight'),
-  orientationSelect: $('orientationSelect'),
+  paperSelect:        $('paperSelect'),
+  customPaperGroup:   $('customPaperGroup'),
+  customPaperWidth:   $('customPaperWidth'),
+  customPaperHeight:  $('customPaperHeight'),
+  orientationSelect:  $('orientationSelect'),
   marginInput: $('marginInput'),
-  gapInput: $('gapInput'),
+  gapInput:    $('gapInput'),
   duplexSelect: $('duplexSelect'),
   // Layout & Results
   cardResultsPlaceholder: $('card-results-placeholder'),
-  cardLayout: $('card-layout'),
+  cardLayout:   $('card-layout'),
   layoutResult: $('layoutResult'),
   // Summary
   cardSummary: $('card-summary'),
-  jobSummary: $('jobSummary'),
+  jobSummary:  $('jobSummary'),
   // Generate
   generateBtn: $('generateBtn'),
   // Downloads
   cardDownloads: $('card-downloads'),
-  dlFront: $('dlFront'),
-  dlBack: $('dlBack'),
-  dlFrontCut: $('dlFrontCut'),
-  dlBackCut: $('dlBackCut'),
-  dlAll: $('dlAll'),
+  dlFront:     $('dlFront'),
+  dlBack:      $('dlBack'),
+  dlFrontFoil: $('dlFrontFoil'),
+  dlBackFoil:  $('dlBackFoil'),
+  dlFrontCut:  $('dlFrontCut'),
+  dlBackCut:   $('dlBackCut'),
+  dlAll:       $('dlAll'),
   // Preview
-  previewTabs: $('previewTabs'),
-  previewCanvas: $('previewCanvas'),
-  previewEmpty: $('previewEmpty'),
+  previewTabs:    $('previewTabs'),
+  previewCanvas:  $('previewCanvas'),
+  previewEmpty:   $('previewEmpty'),
   previewWrapper: $('previewWrapper'),
-  zoomIn: $('zoomIn'),
-  zoomOut: $('zoomOut'),
-  zoomFit: $('zoomFit'),
-  zoom100: $('zoom100'),
+  zoomIn:   $('zoomIn'),
+  zoomOut:  $('zoomOut'),
+  zoomFit:  $('zoomFit'),
+  zoom100:  $('zoom100'),
   // Notifications
   notifications: $('notifications'),
 };
@@ -117,19 +135,30 @@ function init() {
 function bindEvents() {
   // Upload clicks
   elements.frontUpload.addEventListener('click', () => elements.frontFileInput.click());
-  elements.backUpload.addEventListener('click', () => elements.backFileInput.click());
+  elements.backUpload.addEventListener('click',  () => elements.backFileInput.click());
+  elements.frontFoilUpload.addEventListener('click', () => elements.frontFoilFileInput.click());
+  elements.backFoilUpload.addEventListener('click',  () => elements.backFoilFileInput.click());
   
   // File inputs
   elements.frontFileInput.addEventListener('change', (e) => handleFileUpload(e, 'front'));
-  elements.backFileInput.addEventListener('change', (e) => handleFileUpload(e, 'back'));
+  elements.backFileInput.addEventListener('change',  (e) => handleFileUpload(e, 'back'));
+  elements.frontFoilFileInput.addEventListener('change', (e) => handleFileUpload(e, 'front-foil'));
+  elements.backFoilFileInput.addEventListener('change',  (e) => handleFileUpload(e, 'back-foil'));
   
   // Remove buttons — stop click from bubbling to upload area
-  elements.frontRemoveBtn.addEventListener('click', (e) => { e.stopPropagation(); clearFile('front'); });
-  elements.backRemoveBtn.addEventListener('click', (e) => { e.stopPropagation(); clearFile('back'); });
+  elements.frontRemoveBtn.addEventListener('click',     (e) => { e.stopPropagation(); clearFile('front'); });
+  elements.backRemoveBtn.addEventListener('click',      (e) => { e.stopPropagation(); clearFile('back'); });
+  elements.frontFoilRemoveBtn.addEventListener('click', (e) => { e.stopPropagation(); clearFile('front-foil'); });
+  elements.backFoilRemoveBtn.addEventListener('click',  (e) => { e.stopPropagation(); clearFile('back-foil'); });
   
   // Drag & drop
-  setupDragDrop(elements.frontUpload, elements.frontFileInput, 'front');
-  setupDragDrop(elements.backUpload, elements.backFileInput, 'back');
+  setupDragDrop(elements.frontUpload,     elements.frontFileInput,     'front');
+  setupDragDrop(elements.backUpload,      elements.backFileInput,      'back');
+  setupDragDrop(elements.frontFoilUpload, elements.frontFoilFileInput, 'front-foil');
+  setupDragDrop(elements.backFoilUpload,  elements.backFoilFileInput,  'back-foil');
+  
+  // Print type
+  elements.printType.addEventListener('change', handlePrintTypeChange);
   
   // Unit change
   elements.unitSelect.addEventListener('change', handleUnitChange);
@@ -138,20 +167,20 @@ function bindEvents() {
   elements.bleedInput.addEventListener('input', handleSettingsChange);
   
   // Trim mode
-  elements.trimModeAuto.addEventListener('click', () => setTrimMode('auto'));
+  elements.trimModeAuto.addEventListener('click',   () => setTrimMode('auto'));
   elements.trimModeManual.addEventListener('click', () => setTrimMode('manual'));
-  elements.trimWidth.addEventListener('input', handleSettingsChange);
+  elements.trimWidth.addEventListener('input',  handleSettingsChange);
   elements.trimHeight.addEventListener('input', handleSettingsChange);
   
   // Paper
   elements.paperSelect.addEventListener('change', handlePaperChange);
-  elements.customPaperWidth.addEventListener('input', handleSettingsChange);
+  elements.customPaperWidth.addEventListener('input',  handleSettingsChange);
   elements.customPaperHeight.addEventListener('input', handleSettingsChange);
   elements.orientationSelect.addEventListener('change', handleSettingsChange);
   
   // Margin, gap, duplex
-  elements.marginInput.addEventListener('input', handleSettingsChange);
-  elements.gapInput.addEventListener('input', handleSettingsChange);
+  elements.marginInput.addEventListener('input',  handleSettingsChange);
+  elements.gapInput.addEventListener('input',    handleSettingsChange);
   elements.duplexSelect.addEventListener('change', handleSettingsChange);
   
   // Order number — live preview update on every keystroke
@@ -173,10 +202,10 @@ function bindEvents() {
   });
   
   // Zoom controls
-  elements.zoomIn.addEventListener('click', () => previewRenderer.zoomIn());
-  elements.zoomOut.addEventListener('click', () => previewRenderer.zoomOut());
-  elements.zoomFit.addEventListener('click', () => previewRenderer.fitToCanvas());
-  elements.zoom100.addEventListener('click', () => previewRenderer.zoom100());
+  elements.zoomIn.addEventListener('click',   () => previewRenderer.zoomIn());
+  elements.zoomOut.addEventListener('click',  () => previewRenderer.zoomOut());
+  elements.zoomFit.addEventListener('click',  () => previewRenderer.fitToCanvas());
+  elements.zoom100.addEventListener('click',  () => previewRenderer.zoom100());
   
   // Downloads
   elements.dlFront.addEventListener('click', () => {
@@ -184,6 +213,12 @@ function bindEvents() {
   });
   elements.dlBack.addEventListener('click', () => {
     if (generatedPDFs) downloadPDF(generatedPDFs.back.data, generatedPDFs.back.filename);
+  });
+  elements.dlFrontFoil.addEventListener('click', () => {
+    if (generatedPDFs && generatedPDFs.frontFoil) downloadPDF(generatedPDFs.frontFoil.data, generatedPDFs.frontFoil.filename);
+  });
+  elements.dlBackFoil.addEventListener('click', () => {
+    if (generatedPDFs && generatedPDFs.backFoil) downloadPDF(generatedPDFs.backFoil.data, generatedPDFs.backFoil.filename);
   });
   elements.dlFrontCut.addEventListener('click', () => {
     if (generatedPDFs) downloadPDF(generatedPDFs.frontCut.data, generatedPDFs.frontCut.filename);
@@ -251,7 +286,7 @@ async function handleFileUpload(e, side) {
       elements.frontFileName.textContent = fileInfo.filename;
       elements.frontFileDims.textContent = formatDimensions(fileInfo.widthPt, fileInfo.heightPt, currentUnit);
       elements.frontUpload.querySelector('.upload-icon').textContent = '✅';
-    } else {
+    } else if (side === 'back') {
       backFileInfo = fileInfo;
       job.backFile = fileInfo;
       job.backArtworkWidthPt = fileInfo.widthPt;
@@ -262,21 +297,40 @@ async function handleFileUpload(e, side) {
       elements.backFileName.textContent = fileInfo.filename;
       elements.backFileDims.textContent = formatDimensions(fileInfo.widthPt, fileInfo.heightPt, currentUnit);
       elements.backUpload.querySelector('.upload-icon').textContent = '✅';
+    } else if (side === 'front-foil') {
+      frontFoilFileInfo = fileInfo;
+      job.frontFoilFile = fileInfo;
+      
+      elements.frontFoilUpload.classList.add('has-file');
+      elements.frontFoilFileName.textContent = fileInfo.filename;
+      elements.frontFoilFileDims.textContent = formatDimensions(fileInfo.widthPt, fileInfo.heightPt, currentUnit);
+      elements.frontFoilUpload.querySelector('.upload-icon').textContent = '✅';
+    } else if (side === 'back-foil') {
+      backFoilFileInfo = fileInfo;
+      job.backFoilFile = fileInfo;
+      
+      elements.backFoilUpload.classList.add('has-file');
+      elements.backFoilFileName.textContent = fileInfo.filename;
+      elements.backFoilFileDims.textContent = formatDimensions(fileInfo.widthPt, fileInfo.heightPt, currentUnit);
+      elements.backFoilUpload.querySelector('.upload-icon').textContent = '✅';
     }
 
     // Use front as primary artwork size; fall back to back if front is missing
     const primaryFile = frontFileInfo || backFileInfo;
-    job.artworkWidthPt = primaryFile.widthPt;
-    job.artworkHeightPt = primaryFile.heightPt;
+    if (primaryFile) {
+      job.artworkWidthPt = primaryFile.widthPt;
+      job.artworkHeightPt = primaryFile.heightPt;
+    }
     
     // DPI warning
     if (fileInfo.dpiWarning) {
       showNotification(fileInfo.dpiWarning, 'warning', 8000);
     }
+
+    const sideLabels = { 'front': 'Front', 'back': 'Back', 'front-foil': 'Front Foil', 'back-foil': 'Back Foil' };
+    showNotification(`${sideLabels[side]} artwork loaded: ${fileInfo.filename}`, 'success', 3000);
     
-    showNotification(`${side === 'front' ? 'Front' : 'Back'} artwork loaded: ${fileInfo.filename}`, 'success', 3000);
-    
-    // Check dimension match only if both files uploaded
+    // Check dimension match only if both main files uploaded
     checkDimensionMatch();
     updateFileInfoPanel();
     updateArtworkDisplay();
@@ -300,8 +354,9 @@ function clearFile(side) {
     elements.frontFileName.textContent = '';
     elements.frontFileDims.textContent = '';
     elements.frontUpload.querySelector('.upload-icon').textContent = '\ud83d\udcc4';
-    elements.frontFileInput.value = ''; // allow re-uploading same file
-  } else {
+    elements.frontFileInput.value = '';
+
+  } else if (side === 'back') {
     backFileInfo = null;
     job.backFile = null;
     job.backFileInfo = null;
@@ -313,9 +368,29 @@ function clearFile(side) {
     elements.backFileDims.textContent = '';
     elements.backUpload.querySelector('.upload-icon').textContent = '\ud83d\udcc4';
     elements.backFileInput.value = '';
+
+  } else if (side === 'front-foil') {
+    frontFoilFileInfo = null;
+    job.frontFoilFile = null;
+    
+    elements.frontFoilUpload.classList.remove('has-file');
+    elements.frontFoilFileName.textContent = '';
+    elements.frontFoilFileDims.textContent = '';
+    elements.frontFoilUpload.querySelector('.upload-icon').textContent = '\u2728';
+    elements.frontFoilFileInput.value = '';
+
+  } else if (side === 'back-foil') {
+    backFoilFileInfo = null;
+    job.backFoilFile = null;
+    
+    elements.backFoilUpload.classList.remove('has-file');
+    elements.backFoilFileName.textContent = '';
+    elements.backFoilFileDims.textContent = '';
+    elements.backFoilUpload.querySelector('.upload-icon').textContent = '\u2728';
+    elements.backFoilFileInput.value = '';
   }
   
-  // Re-derive primary artwork size from whichever file remains
+  // Re-derive primary artwork size from whichever main side remains
   const primaryFile = frontFileInfo || backFileInfo;
   if (primaryFile) {
     job.artworkWidthPt = primaryFile.widthPt;
@@ -325,13 +400,48 @@ function clearFile(side) {
     job.artworkHeightPt = 0;
   }
 
-  showNotification(`${side === 'front' ? 'Front' : 'Back'} artwork removed.`, 'info', 2500);
+  const sideLabels = { 'front': 'Front', 'back': 'Back', 'front-foil': 'Front Foil', 'back-foil': 'Back Foil' };
+  showNotification(`${sideLabels[side]} artwork removed.`, 'info', 2500);
   
   checkDimensionMatch();
   updateFileInfoPanel();
   updateArtworkDisplay();
   recalculateLayout();
   updateGenerateButton();
+}
+
+// ============================================================
+// Print Type Change
+// ============================================================
+function handlePrintTypeChange() {
+  const isFoil = elements.printType.value === 'foil';
+  job.printType = elements.printType.value;
+
+  // Show/hide foil upload row
+  elements.foilUploadRow.classList.toggle('hidden', !isFoil);
+
+  // Show/hide foil preview tabs
+  document.querySelectorAll('.preview-tab.foil-section').forEach(tab => {
+    tab.classList.toggle('hidden', !isFoil);
+  });
+
+  // Show/hide foil download buttons
+  document.querySelectorAll('.foil-dl').forEach(btn => {
+    btn.classList.toggle('hidden', !isFoil);
+  });
+
+  // If switching back to Normal, clear foil state
+  if (!isFoil) {
+    clearFile('front-foil');
+    clearFile('back-foil');
+    // If current tab is a foil tab, switch back to Front
+    const activeTab = document.querySelector('.preview-tab.active');
+    if (activeTab && (activeTab.dataset.view === 'frontFoil' || activeTab.dataset.view === 'backFoil')) {
+      document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('[data-view="front"]').classList.add('active');
+      previewRenderer.setView('front');
+    }
+  }
 }
 
 // ============================================================
@@ -797,6 +907,7 @@ async function handleGenerate() {
   }
   
   job.orderNumber = elements.orderNumber.value.trim();
+  job.printType   = elements.printType.value;
   
   // Validate all settings one more time
   readAllSettings();
@@ -812,28 +923,41 @@ async function handleGenerate() {
     return;
   }
   
+  const isFoil = job.printType === 'foil';
+  const pdfCount = isFoil ? 6 : 4;
+
   // Disable button, show progress
   elements.generateBtn.disabled = true;
-  elements.generateBtn.innerHTML = '<span class="spinner"></span> Generating...';
+  elements.generateBtn.innerHTML = `<span class="spinner"></span> Generating ${pdfCount} PDFs...`;
   
   try {
     generatedPDFs = await generateAllPDFs(job);
     
-    showNotification('All 4 PDFs generated successfully!', 'success', 5000);
+    showNotification(`All ${pdfCount} PDFs generated successfully!`, 'success', 5000);
     
-    // Show downloads
+    // Show downloads card
     elements.cardDownloads.classList.remove('hidden');
-    elements.dlFront.disabled = false;
-    elements.dlBack.disabled = false;
+    elements.dlFront.disabled    = false;
+    elements.dlBack.disabled     = false;
     elements.dlFrontCut.disabled = false;
-    elements.dlBackCut.disabled = false;
-    elements.dlAll.disabled = false;
+    elements.dlBackCut.disabled  = false;
+    elements.dlAll.disabled      = false;
+
+    // Foil download buttons
+    if (isFoil) {
+      elements.dlFrontFoil.disabled = false;
+      elements.dlBackFoil.disabled  = false;
+    }
     
     // Update button labels with filenames
-    elements.dlFront.querySelector('.dl-text').textContent = generatedPDFs.front.filename;
-    elements.dlBack.querySelector('.dl-text').textContent = generatedPDFs.back.filename;
+    elements.dlFront.querySelector('.dl-text').textContent    = generatedPDFs.front.filename;
+    elements.dlBack.querySelector('.dl-text').textContent     = generatedPDFs.back.filename;
     elements.dlFrontCut.querySelector('.dl-text').textContent = generatedPDFs.frontCut.filename;
-    elements.dlBackCut.querySelector('.dl-text').textContent = generatedPDFs.backCut.filename;
+    elements.dlBackCut.querySelector('.dl-text').textContent  = generatedPDFs.backCut.filename;
+    if (isFoil) {
+      elements.dlFrontFoil.querySelector('.dl-text').textContent = generatedPDFs.frontFoil.filename;
+      elements.dlBackFoil.querySelector('.dl-text').textContent  = generatedPDFs.backFoil.filename;
+    }
     
   } catch (err) {
     showNotification(`PDF generation failed: ${err.message}`, 'error', 0);
