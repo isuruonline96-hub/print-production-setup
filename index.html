@@ -126,11 +126,14 @@
         <!-- Artwork Size -->
         <div class="form-group">
           <label class="form-label">Artwork Size</label>
-          <div class="form-row">
+          <div class="form-row" style="grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px;">
             <div class="input-group">
               <input type="number" id="artworkWidth" class="form-input" step="0.1">
               <span class="input-suffix" id="artworkWidthUnit">mm</span>
             </div>
+            <button class="lock-btn active" id="proportionalLockBtn" title="Toggle proportional scaling" style="padding: 4px;">
+              <span class="lock-icon">🔒</span>
+            </button>
             <div class="input-group">
               <input type="number" id="artworkHeight" class="form-input" step="0.1">
               <span class="input-suffix" id="artworkHeightUnit">mm</span>
@@ -142,9 +145,6 @@
               <input type="number" id="artworkScale" class="form-input" value="100" min="10" max="500" step="1" style="padding-top: 4px; padding-bottom: 4px;">
               <span class="input-suffix" style="padding-left: 6px; padding-right: 6px;">%</span>
             </div>
-            <button class="lock-btn active" id="proportionalLockBtn" title="Toggle proportional scaling">
-              <span class="lock-icon">🔒</span> Proportional
-            </button>
           </div>
         </div>
 
