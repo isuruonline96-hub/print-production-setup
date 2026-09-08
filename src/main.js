@@ -73,6 +73,7 @@ const elements = {
   artworkWidth:  $('artworkWidth'),
   artworkHeight: $('artworkHeight'),
   artworkScale:  $('artworkScale'),
+  proportionalLockBtn: $('proportionalLockBtn'),
   bleedInput:    $('bleedInput'),
   trimModeAuto:   $('trimModeAuto'),
   trimModeManual: $('trimModeManual'),
@@ -165,6 +166,7 @@ function bindEvents() {
   elements.artworkWidth.addEventListener('change', handleArtworkWidthChange);
   elements.artworkHeight.addEventListener('change', handleArtworkHeightChange);
   elements.artworkScale.addEventListener('change', handleArtworkScaleChange);
+  elements.proportionalLockBtn.addEventListener('click', toggleProportionalLock);
   
   // Unit change
   elements.unitSelect.addEventListener('change', handleUnitChange);
@@ -536,8 +538,30 @@ function buildFileInfoHTML(info) {
 // ============================================================
 // Artwork Scaling Handlers
 // ============================================================
+function toggleProportionalLock() {
+  job.isProportional = !job.isProportional;
+  const btn = elements.proportionalLockBtn;
+  
+  if (job.isProportional) {
+    btn.classList.add('active');
+    btn.querySelector('.lock-icon').textContent = '🔒';
+    elements.artworkScale.disabled = false;
+    
+    // When locking, we need a single source of truth to re-sync aspect ratio.
+    // We'll use the current width to recalculate height.
+    if (job.originalArtworkWidthPt && job.originalArtworkHeightPt) {
+       handleArtworkWidthChange(); 
+    }
+  } else {
+    btn.classList.remove('active');
+    btn.querySelector('.lock-icon').textContent = '🔓';
+    elements.artworkScale.disabled = true;
+    elements.artworkScale.value = '';
+  }
+}
+
 function handleArtworkScaleChange() {
-  if (!job.originalArtworkWidthPt || !job.originalArtworkHeightPt) return;
+  if (!job.originalArtworkWidthPt || !job.originalArtworkHeightPt || !job.isProportional) return;
 
   let scale = parseFloat(elements.artworkScale.value);
   if (isNaN(scale) || scale <= 0) scale = 100;
@@ -557,11 +581,13 @@ function handleArtworkWidthChange() {
   if (isNaN(wVal) || wVal <= 0) return updateArtworkDisplay(); // Revert on bad input
 
   const wPt = toPoints(wVal, currentUnit);
-  const scale = (wPt / job.originalArtworkWidthPt) * 100;
-
-  job.artworkScale = scale;
   job.artworkWidthPt = wPt;
-  job.artworkHeightPt = job.originalArtworkHeightPt * (scale / 100);
+
+  if (job.isProportional) {
+    const scale = (wPt / job.originalArtworkWidthPt) * 100;
+    job.artworkScale = scale;
+    job.artworkHeightPt = job.originalArtworkHeightPt * (scale / 100);
+  }
 
   updateArtworkDisplay();
   handleSettingsChange();
@@ -574,11 +600,13 @@ function handleArtworkHeightChange() {
   if (isNaN(hVal) || hVal <= 0) return updateArtworkDisplay(); // Revert on bad input
 
   const hPt = toPoints(hVal, currentUnit);
-  const scale = (hPt / job.originalArtworkHeightPt) * 100;
-
-  job.artworkScale = scale;
   job.artworkHeightPt = hPt;
-  job.artworkWidthPt = job.originalArtworkWidthPt * (scale / 100);
+
+  if (job.isProportional) {
+    const scale = (hPt / job.originalArtworkHeightPt) * 100;
+    job.artworkScale = scale;
+    job.artworkWidthPt = job.originalArtworkWidthPt * (scale / 100);
+  }
 
   updateArtworkDisplay();
   handleSettingsChange();
@@ -602,8 +630,10 @@ function updateArtworkDisplay() {
   elements.artworkWidth.value = formatValue(w, currentUnit);
   elements.artworkHeight.value = formatValue(h, currentUnit);
   
-  // Format scale (max 1 decimal place)
-  elements.artworkScale.value = (Math.round(job.artworkScale * 10) / 10).toString();
+  if (job.isProportional) {
+    // Format scale (max 1 decimal place)
+    elements.artworkScale.value = (Math.round(job.artworkScale * 10) / 10).toString();
+  }
 }
 
 // ============================================================
