@@ -123,21 +123,26 @@
 
         <hr class="divider">
 
-        <!-- Artwork Size (read-only) -->
+        <!-- Artwork Size -->
         <div class="form-group">
           <label class="form-label">Artwork Size</label>
           <div class="form-row">
             <div class="input-group">
-              <input type="text" id="artworkWidth" class="form-input" readonly tabindex="-1">
+              <input type="number" id="artworkWidth" class="form-input" step="0.1">
               <span class="input-suffix" id="artworkWidthUnit">mm</span>
             </div>
             <div class="input-group">
-              <input type="text" id="artworkHeight" class="form-input" readonly tabindex="-1">
+              <input type="number" id="artworkHeight" class="form-input" step="0.1">
               <span class="input-suffix" id="artworkHeightUnit">mm</span>
             </div>
           </div>
-          <div style="margin-top:6px;">
-            <span class="scale-badge">🔒 Artwork Scale: 100%</span>
+          <div style="margin-top:6px; display: flex; align-items: center; gap: 8px;">
+            <label class="form-label" for="artworkScale" style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Scale:</label>
+            <div class="input-group" style="width: 100px;">
+              <input type="number" id="artworkScale" class="form-input" value="100" min="10" max="500" step="1" style="padding-top: 4px; padding-bottom: 4px;">
+              <span class="input-suffix" style="padding-left: 6px; padding-right: 6px;">%</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">🔗 Proportional</span>
           </div>
         </div>
 

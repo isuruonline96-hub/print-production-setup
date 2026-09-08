@@ -502,6 +502,7 @@ GitHub Actions handles the rest automatically within ~2 minutes.
 | v1.7 | 2026-09-07 | **Artwork remove button:** ✕ button on each upload area to clear a file without refreshing |
 | v1.8 | 2026-09-07 | **Foil Print mode:** Print Type dropdown, front/back foil upload areas, 2 extra preview tabs, 6-PDF output |
 | v1.9 | 2026-09-08 | **UI and Bug Fixes:** Moved File Information card to right sidebar, fixed paper orientation swap logic when auto mode is off, and updated SRA3 dimensions to 315×457 mm |
+| v1.10 | 2026-09-08 | **Scalable Artwork:** Made artwork width, height, and scale inputs editable. Adjusting any value scales the artwork proportionately while preserving aspect ratio |
 
 ---
 

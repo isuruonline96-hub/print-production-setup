@@ -72,6 +72,7 @@ const elements = {
   unitSelect:    $('unitSelect'),
   artworkWidth:  $('artworkWidth'),
   artworkHeight: $('artworkHeight'),
+  artworkScale:  $('artworkScale'),
   bleedInput:    $('bleedInput'),
   trimModeAuto:   $('trimModeAuto'),
   trimModeManual: $('trimModeManual'),
@@ -159,6 +160,11 @@ function bindEvents() {
   
   // Print type
   elements.printType.addEventListener('change', handlePrintTypeChange);
+  
+  // Artwork Size & Scale
+  elements.artworkWidth.addEventListener('change', handleArtworkWidthChange);
+  elements.artworkHeight.addEventListener('change', handleArtworkHeightChange);
+  elements.artworkScale.addEventListener('change', handleArtworkScaleChange);
   
   // Unit change
   elements.unitSelect.addEventListener('change', handleUnitChange);
@@ -318,8 +324,11 @@ async function handleFileUpload(e, side) {
     // Use front as primary artwork size; fall back to back if front is missing
     const primaryFile = frontFileInfo || backFileInfo;
     if (primaryFile) {
+      job.originalArtworkWidthPt = primaryFile.widthPt;
+      job.originalArtworkHeightPt = primaryFile.heightPt;
       job.artworkWidthPt = primaryFile.widthPt;
       job.artworkHeightPt = primaryFile.heightPt;
+      job.artworkScale = 100;
     }
     
     // DPI warning
@@ -393,11 +402,17 @@ function clearFile(side) {
   // Re-derive primary artwork size from whichever main side remains
   const primaryFile = frontFileInfo || backFileInfo;
   if (primaryFile) {
+    job.originalArtworkWidthPt = primaryFile.widthPt;
+    job.originalArtworkHeightPt = primaryFile.heightPt;
     job.artworkWidthPt = primaryFile.widthPt;
     job.artworkHeightPt = primaryFile.heightPt;
+    job.artworkScale = 100;
   } else {
+    job.originalArtworkWidthPt = 0;
+    job.originalArtworkHeightPt = 0;
     job.artworkWidthPt = 0;
     job.artworkHeightPt = 0;
+    job.artworkScale = 100;
   }
 
   const sideLabels = { 'front': 'Front', 'back': 'Back', 'front-foil': 'Front Foil', 'back-foil': 'Back Foil' };
@@ -519,6 +534,57 @@ function buildFileInfoHTML(info) {
 }
 
 // ============================================================
+// Artwork Scaling Handlers
+// ============================================================
+function handleArtworkScaleChange() {
+  if (!job.originalArtworkWidthPt || !job.originalArtworkHeightPt) return;
+
+  let scale = parseFloat(elements.artworkScale.value);
+  if (isNaN(scale) || scale <= 0) scale = 100;
+
+  job.artworkScale = scale;
+  job.artworkWidthPt = job.originalArtworkWidthPt * (scale / 100);
+  job.artworkHeightPt = job.originalArtworkHeightPt * (scale / 100);
+
+  updateArtworkDisplay();
+  handleSettingsChange();
+}
+
+function handleArtworkWidthChange() {
+  if (!job.originalArtworkWidthPt || !job.originalArtworkHeightPt) return;
+
+  const wVal = parseFloat(elements.artworkWidth.value);
+  if (isNaN(wVal) || wVal <= 0) return updateArtworkDisplay(); // Revert on bad input
+
+  const wPt = toPoints(wVal, currentUnit);
+  const scale = (wPt / job.originalArtworkWidthPt) * 100;
+
+  job.artworkScale = scale;
+  job.artworkWidthPt = wPt;
+  job.artworkHeightPt = job.originalArtworkHeightPt * (scale / 100);
+
+  updateArtworkDisplay();
+  handleSettingsChange();
+}
+
+function handleArtworkHeightChange() {
+  if (!job.originalArtworkWidthPt || !job.originalArtworkHeightPt) return;
+
+  const hVal = parseFloat(elements.artworkHeight.value);
+  if (isNaN(hVal) || hVal <= 0) return updateArtworkDisplay(); // Revert on bad input
+
+  const hPt = toPoints(hVal, currentUnit);
+  const scale = (hPt / job.originalArtworkHeightPt) * 100;
+
+  job.artworkScale = scale;
+  job.artworkHeightPt = hPt;
+  job.artworkWidthPt = job.originalArtworkWidthPt * (scale / 100);
+
+  updateArtworkDisplay();
+  handleSettingsChange();
+}
+
+// ============================================================
 // Artwork Display
 // ============================================================
 function updateArtworkDisplay() {
@@ -527,6 +593,7 @@ function updateArtworkDisplay() {
   if (!anyFile) {
     elements.artworkWidth.value = '';
     elements.artworkHeight.value = '';
+    elements.artworkScale.value = '100';
     return;
   }
   
@@ -534,6 +601,9 @@ function updateArtworkDisplay() {
   const h = fromPoints(job.artworkHeightPt, currentUnit);
   elements.artworkWidth.value = formatValue(w, currentUnit);
   elements.artworkHeight.value = formatValue(h, currentUnit);
+  
+  // Format scale (max 1 decimal place)
+  elements.artworkScale.value = (Math.round(job.artworkScale * 10) / 10).toString();
 }
 
 // ============================================================
@@ -719,10 +789,6 @@ function recalculateLayout() {
     hideLayoutResults();
     return;
   }
-
-  // Keep artwork dimensions in sync with whichever file is the primary source
-  job.artworkWidthPt = primaryFile.widthPt;
-  job.artworkHeightPt = primaryFile.heightPt;
   
   // Read current settings
   readAllSettings();

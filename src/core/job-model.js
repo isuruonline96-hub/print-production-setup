@@ -29,6 +29,10 @@ export function createJob() {
     artworkWidthPt: 0,
     artworkHeightPt: 0,
     
+    // Original artwork dimensions for scaling
+    originalArtworkWidthPt: 0,
+    originalArtworkHeightPt: 0,
+    
     // Back artwork dimensions (may differ)
     backArtworkWidthPt: 0,
     backArtworkHeightPt: 0,
