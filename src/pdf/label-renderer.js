@@ -21,7 +21,7 @@ import { rgb, StandardFonts } from 'pdf-lib';
  */
 export async function drawLabel(doc, page, orderNumber, side, paperHeightPt, marginPt) {
   const font = await doc.embedFont(StandardFonts.Helvetica);
-  const fontSize = 5;
+  const fontSize = 7;
   const padding = 2;        // pt of whitespace around the text
   const text = `${orderNumber}  ${side}`;
   
@@ -32,7 +32,8 @@ export async function drawLabel(doc, page, orderNumber, side, paperHeightPt, mar
   const approxTextWidth = text.length * fontSize * 0.56;
 
   // X / Y origin (PDF coords: y=0 is bottom of page)
-  const x = safeMargin + 2;
+  const xOffset = 56.7; // 2cm in points
+  const x = safeMargin + 2 + xOffset;
   const y = paperHeightPt - safeMargin - fontSize - padding * 2;
 
   // ── White knockout rectangle ────────────────────────────────────────────

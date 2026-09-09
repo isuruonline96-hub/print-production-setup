@@ -505,6 +505,7 @@ GitHub Actions handles the rest automatically within ~2 minutes.
 | v1.10 | 2026-09-08 | **Scalable Artwork:** Made artwork width, height, and scale inputs editable. Adjusting any value scales the artwork proportionately while preserving aspect ratio |
 | v1.11 | 2026-09-08 | **Proportional Lock:** Added a toggle button (🔒/🔓) to switch between proportional scaling and independent custom width/height adjustments. Moved the lock button between the width and height inputs for better UX |
 | v1.12 | 2026-09-09 | **SRA3 Size:** Updated SRA3 paper size from 315x457mm to 305x457mm |
+| v1.13 | 2026-09-09 | **UI & Label Tweaks:** Grouped "Margin" and "Gap" side-by-side in the Paper & Layout card. Increased the font size of the printed order number label and shifted it 2cm to the right |
 
 ---
 

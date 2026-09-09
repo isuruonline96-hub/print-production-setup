@@ -226,10 +226,11 @@ export function createCanvasManager(canvas) {
      */
     drawLabel(text, marginPt = 0) {
       const safeMargin = Math.max(marginPt, 4);
-      const fontSize = Math.max(6, 10 / scale);
+      const fontSize = Math.max(8, 12 / scale);
       ctx.font = `bold ${fontSize}px sans-serif`;
 
-      const x = safeMargin + 2;
+      const xOffset = 56.7; // 2cm in points
+      const x = safeMargin + 2 + xOffset;
       const y = safeMargin + 2;
       const padding = 2;
       const textWidth = ctx.measureText(text).width;
