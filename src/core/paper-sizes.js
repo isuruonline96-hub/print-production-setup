@@ -14,7 +14,7 @@ export const PAPER_PRESETS = {
   A4: { name: 'A4', widthMm: 210, heightMm: 297 },
   A3: { name: 'A3', widthMm: 297, heightMm: 420 },
   SRA4: { name: 'SRA4', widthMm: 225, heightMm: 320 },
-  SRA3: { name: 'SRA3', widthMm: 315, heightMm: 457 },
+  SRA3: { name: 'SRA3', widthMm: 305, heightMm: 457 },
 };
 
 /**
